@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.xq.system.mapper.meeting.MeetingRoomEquipmentMapper">
+
+    <resultMap type="MeetingRoomEquipment" id="MeetingRoomEquipmentResult">
+        <result property="roomId"     column="room_id"      />
+        <result property="equipmentId"     column="equipment_id"      />
+    </resultMap>
+
+    <delete id="deleteRoomEquipmentByUserId" parameterType="Long">
+        delete from meeting_room_equipment where room_id=#{roomId}
+    </delete>
+
+    <select id="countRoomEquipmentByEquipmentId" resultType="Integer">
+        select count(1) from meeting_room_equipment where equipment_id=#{equipmentId}
+    </select>
+
+    <delete id="deleteRoomEquipment" parameterType="Long">
+        delete from sys_user_role where user_id in
+        <foreach collection="array" item="userId" open="(" separator="," close=")">
+            #{userId}
+        </foreach>
+    </delete>
+
+    <insert id="batchUserRole">
+        insert into sys_user_role(user_id, role_id) values
+        <foreach item="item" index="index" collection="list" separator=",">
+            (#{item.userId},#{item.roleId})
+        </foreach>
+    </insert>
+
+    <delete id="deleteUserRoleInfo" parameterType="SysUserRole">
+        delete from sys_user_role where user_id=#{userId} and role_id=#{roleId}
+    </delete>
+
+    <delete id="deleteUserRoleInfos">
+        delete from sys_user_role where role_id=#{roleId} and user_id in
+        <foreach collection="userIds" item="userId" open="(" separator="," close=")">
+            #{userId}
+        </foreach>
+    </delete>
+
+    <insert id="insertUserRole">
+        insert into sys_user_role(user_id, role_id) values(#{userId},#{roleId})
+    </insert>
+
+    <select id="selectRoleByUserId" resultType="SysUserRole">
+        select * from sys_user_role where user_id = #{userId}
+    </select>
+
+</mapper>

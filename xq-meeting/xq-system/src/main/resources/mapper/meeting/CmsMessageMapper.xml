@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.xq.system.mapper.meeting.CmsMessageMapper">
+
+    <resultMap type="CmsMessage" id="CmsMessageResult">
+        <result property="messageId"    column="message_id"    />
+        <result property="sendId"    column="send_id"    />
+        <result property="sendName"    column="send_name"    />
+        <result property="acceptId"    column="accept_id"    />
+        <result property="acceptName"    column="accept_name"    />
+        <result property="content"    column="content"    />
+        <result property="type"    column="type"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateTime"    column="update_time"    />
+        <result property="isDel"    column="is_del"    />
+        <result property="isRead"    column="is_read"    />
+    </resultMap>
+
+    <sql id="selectCmsMessageVo">
+        select message_id, send_id, send_name, accept_id,accept_name ,content, type, create_time, update_time, is_del, is_read from cms_message
+    </sql>
+
+    <select id="selectCmsMessageList" parameterType="CmsMessage" resultMap="CmsMessageResult">
+        <include refid="selectCmsMessageVo"/>
+        <where>
+            <if test="sendId != null "> and send_id = #{sendId}</if>
+            <if test="sendName != null  and sendName != ''"> and send_name like concat('%', #{sendName}, '%')</if>
+            <if test="acceptId != null "> and accept_id = #{acceptId}</if>
+            <if test="acceptName != null  and acceptName != ''"> and accept_name like concat('%', #{acceptName}, '%')</if>
+            <if test="content != null  and content != ''"> and content = #{content}</if>
+            <if test="type != null  and type != ''"> and type = #{type}</if>
+            <if test="isRead != null "> and is_read = #{isRead}</if>
+        </where>
+        order by create_time desc
+    </select>
+
+    <select id="selectCmsMessageByMessageId" parameterType="Long" resultMap="CmsMessageResult">
+        <include refid="selectCmsMessageVo"/>
+        where message_id = #{messageId}
+    </select>
+
+    <insert id="insertCmsMessage" parameterType="CmsMessage">
+        insert into cms_message
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="messageId != null">message_id,</if>
+            <if test="sendId != null">send_id,</if>
+            <if test="sendName != null and sendName != ''">send_name,</if>
+            <if test="acceptName != null and acceptName != ''">accept_name,</if>
+            <if test="acceptId != null">accept_id,</if>
+            <if test="content != null">content,</if>
+            <if test="type != null and type != ''">type,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateTime != null">update_time,</if>
+            <if test="isDel != null">is_del,</if>
+            <if test="isRead != null">is_read,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="messageId != null">#{messageId},</if>
+            <if test="sendId != null">#{sendId},</if>
+            <if test="sendName != null and sendName != ''">#{sendName},</if>
+            <if test="acceptId != null">#{acceptId},</if>
+            <if test="acceptName != null and acceptName != ''">#{acceptName},</if>
+            <if test="content != null">#{content},</if>
+            <if test="type != null and type != ''">#{type},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+            <if test="isDel != null">#{isDel},</if>
+            <if test="isRead != null">#{isRead},</if>
+         </trim>
+    </insert>
+
+    <insert id="addCmsMessageByAllMeetingUser">
+        INSERT INTO cms_message (
+            send_id,
+            send_name,
+            accept_id,
+            accept_name,
+            content,
+            type,
+            create_time,
+            update_time,
+            is_del,
+            is_read
+        )
+        SELECT
+            cm.user_id,
+            cm.user_name,
+            su.user_id,
+            su.user_name,
+            CONCAT('您被邀请参加会议：', cm.meeting_name),
+            #{type},
+            NOW(),
+            NOW(),
+            b'0',
+            b'0'
+        FROM
+            cms_meeting cm
+                CROSS JOIN
+            JSON_TABLE(
+                    cm.member_number,
+                    '$[*]' COLUMNS (user_id BIGINT PATH '$')
+            ) AS jt
+                JOIN
+            sys_user su ON jt.user_id = su.user_id
+        WHERE
+            cm.meeting_id = #{meetingId};
+    </insert>
+
+    <update id="updateCmsMessage" parameterType="CmsMessage">
+        update cms_message
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="sendId != null">send_id = #{sendId},</if>
+            <if test="sendName != null and sendName != ''">send_name = #{sendName},</if>
+            <if test="acceptId != null">accept_id = #{acceptId},</if>
+            <if test="acceptName != null and acceptName != ''">accept_name = #{acceptName},</if>
+            <if test="content != null">content = #{content},</if>
+            <if test="type != null and type != ''">type = #{type},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+            <if test="isDel != null">is_del = #{isDel},</if>
+            <if test="isRead != null">is_read = #{isRead},</if>
+        </trim>
+        where message_id = #{messageId}
+    </update>
+
+    <delete id="deleteCmsMessageByMessageId" parameterType="Long">
+        delete from cms_message where message_id = #{messageId}
+    </delete>
+
+    <delete id="deleteCmsMessageByMessageIds" parameterType="String">
+        delete from cms_message where message_id in
+        <foreach item="messageId" collection="array" open="(" separator="," close=")">
+            #{messageId}
+        </foreach>
+    </delete>
+</mapper>

@@ -1,0 +1,443 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.xq.system.mapper.meeting.CmsMeetingMapper">
+
+    <resultMap type="CmsMeeting" id="CmsMeetingResult">
+        <result property="meetingId"    column="meeting_id"    />
+        <result property="meetingName"    column="meeting_name"    />
+        <result property="meetingDesc"    column="meeting_desc"    />
+        <result property="userId"    column="user_id"    />
+        <result property="userName"    column="user_name"    />
+        <result property="memberNumber"    column="member_number"    />
+        <result property="type"    column="type"    />
+        <result property="roomId"    column="room_id"    />
+        <result property="startTime"    column="start_time"    />
+        <result property="endTime"    column="end_time"    />
+        <result property="timeFrame"    column="time_frame"    />
+        <result property="status"    column="status"    />
+        <result property="isDel"    column="is_del"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateTime"    column="update_time"    />
+        <result property="deptId"    column="dept_id"    />
+        <association property="dept"    javaType="SysDept"         resultMap="deptResult" />
+        <association property="user"    javaType="SysUser"         resultMap="SysUserResult" />
+        <collection  property="meetingRooms"   javaType="java.util.List"  resultMap="MeetingRoomResult" />
+    </resultMap>
+
+    <resultMap type="MeetingRoom" id="MeetingRoomResult">
+        <result property="roomId"    column="room_id"    />
+        <result property="roomName"    column="room_name"    />
+        <result property="location"    column="location"    />
+        <result property="capacity"    column="capacity"    />
+        <result property="deptId"    column="dept_id"    />
+        <result property="status"    column="status"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"    column="update_by"  />
+        <result property="updateTime"    column="update_time"    />
+    </resultMap>
+
+    <resultMap id="deptResult" type="SysDept">
+        <id     property="deptId"    column="dept_id"     />
+        <result property="parentId"  column="parent_id"   />
+        <result property="deptName"  column="dept_name"   />
+        <result property="ancestors" column="ancestors"   />
+        <result property="orderNum"  column="order_num"   />
+        <result property="leader"    column="leader"      />
+        <result property="status"    column="dept_status" />
+    </resultMap>
+
+    <resultMap type="SysUser" id="SysUserResult">
+        <id     property="userId"       column="user_id"      />
+        <result property="deptId"       column="dept_id"      />
+        <result property="userName"     column="user_name"    />
+        <result property="nickName"     column="nick_name"    />
+        <result property="email"        column="email"        />
+        <result property="phonenumber"  column="phonenumber"  />
+        <result property="sex"          column="sex"          />
+        <result property="avatar"       column="avatar"       />
+        <result property="password"     column="password"     />
+        <result property="status"       column="status"       />
+        <result property="delFlag"      column="del_flag"     />
+        <result property="loginIp"      column="login_ip"     />
+        <result property="loginDate"    column="login_date"   />
+        <result property="createBy"     column="create_by"    />
+        <result property="createTime"   column="create_time"  />
+        <result property="updateBy"     column="update_by"    />
+        <result property="updateTime"   column="update_time"  />
+        <result property="remark"       column="remark"       />
+    </resultMap>
+
+
+    <sql id="selectCmsMeetingRoomVo">
+        select  cm.dept_id,mr.room_name,mr.capacity,mr.location,mr.create_time,meeting_id, meeting_name, meeting_desc, user_id, user_name, member_number, type, cm.room_id, start_time, end_time, time_frame, cm.status, is_del, cm.create_time, cm.update_time
+        from cms_meeting cm
+              left  join  meeting_room mr
+                           on cm.room_id = mr.room_id
+#                 join sys_dept sd
+#                             on cm.dept_id = sd.dept_id
+        where cm.is_del = 0
+    </sql>
+    <sql id="selectCmsMeetingVo">
+        select meeting_id, meeting_name, meeting_desc, user_id, user_name, member_number, type, cm.room_id, start_time, end_time, time_frame, cm.status, is_del, cm.create_time, cm.update_time
+        from cms_meeting cm
+    </sql>
+    <select id="selectCmsMeetingListByAdmin" resultType="CmsMeeting" resultMap="CmsMeetingResult">
+        <include refid="selectCmsMeetingVo"/>
+        <where>
+            <if test="meetingName != null  and meetingName != ''">
+                and meeting_name like concat('%', #{meetingName}, '%')
+            </if>
+            <if test="meetingDesc != null  and meetingDesc != ''">
+                and meeting_desc = #{meetingDesc}
+            </if>
+            <!--            <if test="cmsMeeting.userId != null ">-->
+            <!--                and user_id = #{userId}-->
+            <!--            </if>-->
+            <if test="userName != null  and userName != ''">
+                and user_name like concat('%', #{userName}, '%')
+            </if>
+            <if test="memberNumber != null  and memberNumber != ''">
+                and member_number = #{memberNumber}
+            </if>
+            <if test="type != null ">
+                and type = #{type}
+            </if>
+            <if test="roomId != null ">
+                and room_id = #{roomId}
+            </if>
+
+            <!-- 改为范围查询 -->
+            <if test="startTime != null or endTime != null">
+                AND start_time
+                <choose>
+                    <when test="startTime != null and endTime != null">
+                        BETWEEN #{startTime} AND #{endTime}
+                    </when>
+                    <when test="startTime != null">
+                        >= #{startTime}
+                    </when>
+                    <otherwise>
+                        &lt;= #{endTime}
+                    </otherwise>
+                </choose>
+            </if>
+            <if test="timeFrame != null ">
+                and time_frame = #{timeFrame}
+            </if>
+            <if test="status != null ">
+                and status = #{status}
+            </if>
+            <if test="isDel != null ">
+                and is_del = #{isDel}
+            </if>
+        </where>
+        order by start_time desc, end_time desc
+    </select>
+
+    <select id="selectCmsMeetingList" parameterType="CmsMeeting" resultMap="CmsMeetingResult">
+        <include refid="selectCmsMeetingVo"/>
+        <where>
+            <if test="cmsMeeting.meetingName != null  and cmsMeeting.meetingName != ''">
+                and meeting_name like concat('%', #{cmsMeeting.meetingName}, '%')
+            </if>
+            <if test="cmsMeeting.meetingDesc != null  and cmsMeeting.meetingDesc != ''">
+                and meeting_desc = #{cmsMeeting.meetingDesc}
+            </if>
+<!--            <if test="cmsMeeting.userId != null ">-->
+<!--                and user_id = #{userId}-->
+<!--            </if>-->
+            <if test="cmsMeeting.userName != null  and cmsMeeting.userName != ''">
+                and user_name like concat('%', #{cmsMeeting.userName}, '%')
+            </if>
+            <if test="cmsMeeting.memberNumber != null  and cmsMeeting.memberNumber != ''">
+                and member_number = #{cmsMeeting.memberNumber}
+            </if>
+            <if test="cmsMeeting.type != null ">
+                and type = #{cmsMeeting.type}
+            </if>
+            <if test="cmsMeeting.roomId != null ">
+                and room_id = #{cmsMeeting.roomId}
+            </if>
+
+            <!-- 改为范围查询 -->
+            <if test="cmsMeeting.startTime != null or cmsMeeting.endTime != null">
+                AND start_time
+                <choose>
+                    <when test="cmsMeeting.startTime != null and cmsMeeting.endTime != null">
+                        BETWEEN #{cmsMeeting.startTime} AND #{cmsMeeting.endTime}
+                    </when>
+                    <when test="cmsMeeting.startTime != null">
+                        >= #{cmsMeeting.startTime}
+                    </when>
+                    <otherwise>
+                        &lt;= #{cmsMeeting.endTime}
+                    </otherwise>
+                </choose>
+            </if>
+            <if test="cmsMeeting.timeFrame != null ">
+                and time_frame = #{cmsMeeting.timeFrame}
+            </if>
+            <if test="cmsMeeting.status != null ">
+                and status = #{cmsMeeting.status}
+            </if>
+            <if test="cmsMeeting.isDel != null ">
+                and is_del = #{cmsMeeting.isDel}
+            </if>
+            and user_id = #{userId}
+        </where>
+        order by start_time desc, end_time desc
+    </select>
+
+    <select id="getUserAllMeeting" resultMap="CmsMeetingResult">
+        <include refid="selectCmsMeetingVo"/>
+        <where>
+            <if test="cmsMeeting.meetingName != null  and cmsMeeting.meetingName != ''">
+                and meeting_name like concat('%', #{cmsMeeting.meetingName}, '%')
+            </if>
+            <if test="cmsMeeting.meetingDesc != null  and cmsMeeting.meetingDesc != ''">
+                and meeting_desc = #{cmsMeeting.meetingDesc}
+            </if>
+            <if test="cmsMeeting.userId != null ">
+                and user_id = #{cmsMeeting.userId}
+            </if>
+            <if test="cmsMeeting.userName != null  and cmsMeeting.userName != ''">
+                and user_name like concat('%', #{cmsMeeting.userName}, '%')
+            </if>
+            <if test="cmsMeeting.memberNumber != null  and cmsMeeting.memberNumber != ''">
+                and member_number = #{cmsMeeting.memberNumber}
+            </if>
+            <if test="cmsMeeting.type != null ">
+                and type = #{cmsMeeting.type}
+            </if>
+            <if test="cmsMeeting.roomId != null ">
+                and room_id = #{cmsMeeting.roomId}
+            </if>
+            <!-- 改为范围查询 -->
+            <if test="cmsMeeting.startTime != null or cmsMeeting.endTime != null">
+                AND start_time
+                <choose>
+                    <when test="cmsMeeting.startTime != null and cmsMeeting.endTime != null">
+                        BETWEEN #{cmsMeeting.startTime} AND #{cmsMeeting.endTime}
+                    </when>
+                    <when test="cmsMeeting.startTime != null">
+                        >= #{cmsMeeting.startTime}
+                    </when>
+                    <otherwise>
+                        &lt;= #{cmsMeeting.endTime}
+                    </otherwise>
+                </choose>
+            </if>
+            <if test="cmsMeeting.timeFrame != null ">
+                and time_frame = #{cmsMeeting.timeFrame}
+            </if>
+            <if test="cmsMeeting.status != null ">
+                and status = #{cmsMeeting.status}
+            </if>
+            <if test="cmsMeeting.isDel != null ">
+                and is_del = #{cmsMeeting.isDel}
+            </if>
+            <if test="userId != null">
+                and (
+                member_number IS NOT NULL
+                AND member_number != ''
+                AND FIND_IN_SET(#{userId}, REPLACE(REPLACE(REPLACE(member_number, '[', ''), ']', ''), ' ', ''))
+                )
+            </if>
+        </where>
+        and status IN ('1', '3','4')
+        order by start_time desc, end_time desc
+    </select>
+
+    <select id="getUserAllMeetingByAdmin" resultType="CmsMeeting" resultMap="CmsMeetingResult">
+        <include refid="selectCmsMeetingVo"/>
+        <where>
+            <if test="meetingName != null  and meetingName != ''">
+                and meeting_name like concat('%', #{meetingName}, '%')
+            </if>
+            <if test="meetingDesc != null  and meetingDesc != ''">
+                and meeting_desc = #{meetingDesc}
+            </if>
+            <if test="userName != null  and userName != ''">
+                and user_name like concat('%', #{userName}, '%')
+            </if>
+            <if test="memberNumber != null  and memberNumber != ''">
+                and member_number = #{memberNumber}
+            </if>
+            <if test="type != null ">
+                and type = #{type}
+            </if>
+            <if test="roomId != null ">
+                and room_id = #{roomId}
+            </if>
+            <!-- 改为范围查询 -->
+            <if test="startTime != null or endTime != null">
+                AND start_time
+                <choose>
+                    <when test="startTime != null and endTime != null">
+                        BETWEEN #{startTime} AND #{endTime}
+                    </when>
+                    <when test="startTime != null">
+                        >= #{startTime}
+                    </when>
+                    <otherwise>
+                        &lt;= #{endTime}
+                    </otherwise>
+                </choose>
+            </if>
+            <if test="timeFrame != null ">
+                and time_frame = #{timeFrame}
+            </if>
+            <if test="status != null ">
+                and status = #{status}
+            </if>
+            <if test="isDel != null ">
+                and is_del = #{isDel}
+            </if>
+            <if test="userId != null">
+                and (
+                member_number IS NOT NULL
+                AND member_number != ''
+                AND FIND_IN_SET(#{userId}, REPLACE(REPLACE(REPLACE(member_number, '[', ''), ']', ''), ' ', ''))
+                )
+            </if>
+
+                and status not in ('0','2')
+
+        </where>
+        order by start_time desc, end_time desc
+    </select>
+
+
+    <select id="selectCmsMeetingByMeetingId" parameterType="Long" resultMap="CmsMeetingResult">
+        <include refid="selectCmsMeetingRoomVo"/>
+        and meeting_id = #{meetingId}
+    </select>
+
+    <select id="selectMeetingsToStart" resultMap="CmsMeetingResult">
+        SELECT *
+        FROM cms_meeting
+        WHERE
+            status = '1'
+          AND start_time &lt;= #{now}
+          AND end_time &gt; #{now}
+        <if test="todayStart != null">
+            AND start_time >= #{todayStart}
+        </if>
+        <if test="todayEnd != null">
+            AND start_time &lt;= #{todayEnd}
+        </if>
+    </select>
+
+    <select id="selectMeetingsToEnd" resultMap="CmsMeetingResult">
+        SELECT * FROM cms_meeting
+        WHERE status IN ('0','1', '3')
+          AND end_time &lt;= #{now}
+        <if test="todayStart != null">
+            AND end_time >= #{todayStart}
+        </if>
+        <if test="todayEnd != null">
+            AND end_time &lt;= #{todayEnd}
+        </if>
+    </select>
+
+    <select id="selectPendingMeetings" resultMap="CmsMeetingResult">
+        SELECT * FROM cms_meeting
+                 WHERE end_time > NOW()
+                   AND status NOT IN ('2','4')
+                   AND start_time >= #{todayStart}
+                   AND start_time &lt;= #{todayEnd};
+    </select>
+
+    <select id="selectUserFutureMeetingById" parameterType="java.lang.Long" resultMap="CmsMeetingResult">
+       <![CDATA[
+        SELECT
+            m.*
+        FROM
+            cms_meeting m
+        WHERE
+            JSON_CONTAINS(m.member_number, CAST(CONCAT('[', #{userId}, ']') AS JSON), '$')
+          AND (
+                m.start_time BETWEEN CURDATE() AND CURDATE() + INTERVAL 3 DAY
+                OR m.end_time BETWEEN CURDATE() AND CURDATE() + INTERVAL 3 DAY
+                OR (m.start_time <= NOW() AND m.end_time >= NOW())
+            )
+          AND m.is_del = b'0'
+        ]]>
+    </select>
+
+    <insert id="insertCmsMeeting" parameterType="CmsMeeting"  useGeneratedKeys="true" keyProperty="meetingId">
+        insert into cms_meeting
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="meetingId != null">meeting_id,</if>
+            <if test="meetingName != null and meetingName != ''">meeting_name,</if>
+            <if test="meetingDesc != null and meetingDesc != ''">meeting_desc,</if>
+            <if test="userId != null">user_id,</if>
+            <if test="userName != null and userName != ''">user_name,</if>
+            <if test="memberNumber != null">member_number,</if>
+            <if test="type != null">type,</if>
+            <if test="roomId != null">room_id,</if>
+            <if test="startTime != null">start_time,</if>
+            <if test="endTime != null">end_time,</if>
+            <if test="timeFrame != null">time_frame,</if>
+            <if test="status != null">status,</if>
+            <if test="isDel != null">is_del,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateTime != null">update_time,</if>
+            <if test="deptId != null">dept_id,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="meetingId != null">#{meetingId},</if>
+            <if test="meetingName != null and meetingName != ''">#{meetingName},</if>
+            <if test="meetingDesc != null and meetingDesc != ''">#{meetingDesc},</if>
+            <if test="userId != null">#{userId},</if>
+            <if test="userName != null and userName != ''">#{userName},</if>
+            <if test="memberNumber != null">#{memberNumber},</if>
+            <if test="type != null">#{type},</if>
+            <if test="roomId != null">#{roomId},</if>
+            <if test="startTime != null">#{startTime},</if>
+            <if test="endTime != null">#{endTime},</if>
+            <if test="timeFrame != null">#{timeFrame},</if>
+            <if test="status != null">#{status},</if>
+            <if test="isDel != null">#{isDel},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+            <if test="deptId != null">#{deptId},</if>
+         </trim>
+    </insert>
+
+    <update id="updateCmsMeeting" parameterType="CmsMeeting">
+        update cms_meeting
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="meetingName != null and meetingName != ''">meeting_name = #{meetingName},</if>
+            <if test="meetingDesc != null and meetingDesc != ''">meeting_desc = #{meetingDesc},</if>
+            <if test="userId != null">user_id = #{userId},</if>
+            <if test="userName != null and userName != ''">user_name = #{userName},</if>
+            <if test="memberNumber != null">member_number = #{memberNumber},</if>
+            <if test="type != null">type = #{type},</if>
+            <if test="roomId != null">room_id = #{roomId},</if>
+            <if test="startTime != null">start_time = #{startTime},</if>
+            <if test="endTime != null">end_time = #{endTime},</if>
+            <if test="timeFrame != null">time_frame = #{timeFrame},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="isDel != null">is_del = #{isDel},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+            <if test="deptId != null"> dept_id = #{deptId},</if>
+        </trim>
+        where meeting_id = #{meetingId}
+    </update>
+
+    <delete id="deleteCmsMeetingByMeetingId" parameterType="Long">
+        delete from cms_meeting where meeting_id = #{meetingId}
+    </delete>
+
+    <delete id="deleteCmsMeetingByMeetingIds" parameterType="String">
+        delete from cms_meeting where meeting_id in
+        <foreach item="meetingId" collection="array" open="(" separator="," close=")">
+            #{meetingId}
+        </foreach>
+    </delete>
+</mapper>

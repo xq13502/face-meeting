@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.xq.system.mapper.meeting.MeetingApprovalMapper">
+
+    <resultMap type="MeetingApproval" id="MeetingApprovalLogResult">
+        <result property="id"    column="id"    />
+        <result property="meetingId"    column="meeting_id"    />
+        <result property="meetingName"    column="meeting_name"    />
+        <result property="userId"    column="user_id"    />
+        <result property="userName"    column="user_Name"    />
+        <result property="status"    column="status"    />
+        <result property="approveTime"    column="approve_time"    />
+        <result property="opinion"    column="opinion"    />
+        <association property="cmsMeeting" resultMap="CmsMeetingResult"/>
+    </resultMap>
+
+<!--    <resultMap id="MeetingApprovalLogCmsMeetingResult" type="MeetingApproval" extends="MeetingApprovalLogResult">-->
+<!--        <collection property="cmsMeetings" ofType="CmsMeeting" column="id" select="selectMeetingReservationList" />-->
+<!--    </resultMap>-->
+
+    <resultMap type="CmsMeeting" id="CmsMeetingResult">
+        <result property="meetingId"    column="meeting_id"    />
+        <result property="meetingName"    column="meeting_name"    />
+        <result property="meetingDesc"    column="meeting_desc"    />
+        <result property="userId"    column="user_id"    />
+        <result property="userName"    column="user_name"    />
+        <result property="memberNumber"    column="member_number"    />
+        <result property="type"    column="type"    />
+        <result property="roomId"    column="room_id"    />
+        <result property="startTime"    column="start_time"    />
+        <result property="endTime"    column="end_time"    />
+        <result property="timeFrame"    column="time_frame"    />
+        <result property="status"    column="status"    />
+        <result property="isDel"    column="is_del"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateTime"    column="update_time"    />
+        <result property="deptId"    column="dept_id"    />
+    </resultMap>
+
+    <sql id="selectMeetingApprovalLogVo">
+        select id, mpl.meeting_id, mpl.meeting_name, mpl.user_id,mpl.user_name,mpl.status,approve_time, opinion,cm.start_time,cm.end_time
+        from meeting_approval mpl left join cms_meeting  cm on mpl.meeting_id = cm.meeting_id
+    </sql>
+
+    <select id="selectMeetingApprovalLogList" parameterType="MeetingApproval" resultMap="MeetingApprovalLogResult">
+        <include refid="selectMeetingApprovalLogVo"/>
+        <where>
+            <if test="meetingId != null "> and meeting_id = #{meetingId } </if>
+            <if test="meetingName != null "> and mpl.meeting_name like concat('%', #{meetingName }, '%')  </if>
+            <if test="userId != null "> and mpl.user_id = #{userId} </if>
+            <if test="status != null "> and mpl.status = #{status} </if>
+            <if test="userName != null "> and mpl.user_name = #{userName}</if>
+            <if test="params.beginTime != null and params.beginTime != ''"><!-- 开始时间检索 -->
+                AND date_format(approve_time,'%Y%m%d') &gt;= date_format(#{params.beginTime},'%Y%m%d')
+            </if>
+            <if test="params.endTime != null and params.endTime != ''"><!-- 结束时间检索 -->
+                AND date_format(approve_time,'%Y%m%d') &lt;= date_format(#{params.endTime},'%Y%m%d')
+            </if>
+            <if test="opinion != null  and opinion != ''"> and opinion = #{opinion}</if>
+        </where>
+        order by cm.start_time desc
+    </select>
+
+    <select id="selectMeetingApprovalLogByLogId" parameterType="Long" resultMap="MeetingApprovalLogResult">
+        select id, ma.meeting_id, ma.meeting_name, ma.user_name, ma.user_id, ma.status, approve_time, opinion, cm.start_time, cm.end_time
+        from meeting_approval ma join cms_meeting cm on ma.meeting_id = cm.meeting_id
+        where id = #{id}
+    </select>
+    <select id="selectMeetingApprovalLogByMeetingId"
+            resultType="MeetingApproval">
+        select id,  meeting_id, meeting_name,status, user_id,user_name,  approve_time, opinion
+        from meeting_approval
+        where meeting_id = #{meetingId}
+    </select>
+
+
+
+    <insert id="insertMeetingApprovalLog" parameterType="MeetingApproval" useGeneratedKeys="true" keyProperty="id">
+        insert into meeting_approval
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="meetingId != null ">  meeting_id,</if>
+            <if test="meetingName != null ">  meeting_name,</if>
+            <if test="userId != null ">  user_id, </if>
+            <if test="userName != null ">  user_name, </if>
+            <if test="status != null ">  status, </if>
+            <if test="approveTime != null ">  approve_time, </if>
+            <if test="opinion != null  and opinion != ''">  opinion, </if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="meetingId != null ">  #{meetingId}, </if>
+            <if test="meetingName != null ">  #{meetingName}, </if>
+            <if test="userId != null ">  #{userId}, </if>
+            <if test="userName != null ">  #{userName},</if>
+            <if test="status != null ">  #{status}, </if>
+            <if test="approveTime != null ">  #{approveTime},</if>
+            <if test="opinion != null  and opinion != ''">#{opinion},</if>
+         </trim>
+    </insert>
+
+    <update id="updateMeetingApprovalLog" parameterType="MeetingApproval">
+        update meeting_approval
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="meetingId != null ">  meeting_id = #{meetingId }, </if>
+            <if test="meetingName != null ">  meeting_name = #{meetingName }, </if>
+            <if test="userId != null ">  user_id = #{userId}, </if>
+            <if test="userName != null ">  user_name = #{userName},</if>
+            <if test="status != null ">  status = #{status}, </if>
+            <if test="approveTime != null ">  approve_time = #{approveTime},</if>
+            <if test="opinion != null  and opinion != ''">  opinion = #{opinion},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteMeetingApprovalLogByLogId" parameterType="Long">
+        delete from meeting_approval where id = #{id}
+    </delete>
+
+    <delete id="deleteMeetingApprovalLogByLogIds" parameterType="String">
+        delete from meeting_approval where id in
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+</mapper>

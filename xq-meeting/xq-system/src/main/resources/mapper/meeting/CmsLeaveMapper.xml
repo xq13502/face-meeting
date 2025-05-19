@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.xq.system.mapper.meeting.CmsLeaveMapper">
+
+    <resultMap type="CmsLeave" id="CmsLeaveResult">
+        <result property="id"    column="id"    />
+        <result property="userName"    column="user_name"    />
+        <result property="userId"    column="user_id"    />
+        <result property="meetingName"    column="meeting_name"    />
+        <result property="meetingId"    column="meeting_id"    />
+        <result property="reason"    column="reason"    />
+        <result property="status"    column="status"    />
+        <result property="isDel"    column="is_del"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateTime"    column="update_time"    />
+    </resultMap>
+
+    <sql id="selectCmsLeaveVo">
+        select id, user_name, user_id, meeting_name, meeting_id, reason, status, is_del, create_time, update_time from cms_leave
+    </sql>
+
+    <select id="selectCmsLeaveList" parameterType="CmsLeave" resultMap="CmsLeaveResult">
+        <include refid="selectCmsLeaveVo"/>
+        <where>
+            <if test="userName != null  and userName != ''"> and user_name like concat('%', #{userName}, '%')</if>
+            <if test="userId != null "> and user_id = #{userId}</if>
+            <if test="meetingName != null  and meetingName != ''"> and meeting_name like concat('%', #{meetingName}, '%')</if>
+            <if test="meetingId != null "> and meeting_id = #{meetingId}</if>
+            <if test="reason != null  and reason != ''"> and reason = #{reason}</if>
+            <if test="status != null "> and status = #{status}</if>
+            <if test="params.beginTime != null and params.beginTime != ''"><!-- 开始时间检索 -->
+                AND date_format(update_time,'%Y%m%d') &gt;= date_format(#{params.beginTime},'%Y%m%d')
+            </if>
+            <if test="params.endTime != null and params.endTime != ''"><!-- 结束时间检索 -->
+                AND date_format(update_time,'%Y%m%d') &lt;= date_format(#{params.endTime},'%Y%m%d')
+            </if>
+            <if test="isDel != null "> and is_del = #{isDel}</if>
+        </where>
+            order by create_time desc
+    </select>
+
+    <select id="getLeaveRecordsByUserId" parameterType="Long" resultMap="CmsLeaveResult">
+        SELECT
+            id, l.user_name, l.user_id, l.meeting_name, l.meeting_id, reason, l.status, l.is_del, l.create_time, l.update_time
+        FROM
+            cms_leave l
+                JOIN
+            cms_meeting m ON l.meeting_id = m.meeting_id
+        WHERE
+            m.user_id = #{userId}  -- 当前用户的编号
+          AND JSON_CONTAINS(m.member_number, CAST(l.user_id AS JSON), '$')  -- 确保请假人是会议的参会人员
+          AND l.is_del = 0  -- 逻辑未删除的请假记录
+          AND m.is_del = 0  -- 逻辑未删除的会议记录
+        order by l.create_time desc, l.update_time desc
+    </select>
+
+    <select id="selectCmsLeaveListById" parameterType="Long" resultMap="CmsLeaveResult">
+       select * from cms_leave
+       where user_id = #{userId}
+       order by create_time desc,update_time desc
+    </select>
+
+
+    <select id="selectCmsLeaveById" parameterType="Long" resultMap="CmsLeaveResult">
+        <include refid="selectCmsLeaveVo"/>
+        where id = #{id}
+    </select>
+    <select id="selectCurrentCmsLeave" resultType="CmsLeave" resultMap="CmsLeaveResult">
+        select * from cms_leave where user_id = #{userId} and meeting_id = #{meetingId} and meeting_name = #{meetingName} and is_del = 0
+    </select>
+
+    <insert id="insertCmsLeave" parameterType="CmsLeave">
+        insert into cms_leave
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="id != null">id,</if>
+            <if test="userName != null and userName != ''">user_name,</if>
+            <if test="userId != null">user_id,</if>
+            <if test="meetingName != null and meetingName != ''">meeting_name,</if>
+            <if test="meetingId != null">meeting_id,</if>
+            <if test="reason != null and reason != ''">reason,</if>
+            <if test="status != null">status,</if>
+            <if test="isDel != null">is_del,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateTime != null">update_time,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="id != null">#{id},</if>
+            <if test="userName != null and userName != ''">#{userName},</if>
+            <if test="userId != null">#{userId},</if>
+            <if test="meetingName != null and meetingName != ''">#{meetingName},</if>
+            <if test="meetingId != null">#{meetingId},</if>
+            <if test="reason != null and reason != ''">#{reason},</if>
+            <if test="status != null">#{status},</if>
+            <if test="isDel != null">#{isDel},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+         </trim>
+    </insert>
+
+    <update id="updateCmsLeave" parameterType="CmsLeave">
+        update cms_leave
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="userName != null and userName != ''">user_name = #{userName},</if>
+            <if test="userId != null">user_id = #{userId},</if>
+            <if test="meetingName != null and meetingName != ''">meeting_name = #{meetingName},</if>
+            <if test="meetingId != null">meeting_id = #{meetingId},</if>
+            <if test="reason != null and reason != ''">reason = #{reason},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="isDel != null">is_del = #{isDel},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteCmsLeaveById" parameterType="Long">
+        delete from cms_leave where id = #{id}
+    </delete>
+
+    <delete id="deleteCmsLeaveByIds" parameterType="String">
+        delete from cms_leave where id in
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+</mapper>
