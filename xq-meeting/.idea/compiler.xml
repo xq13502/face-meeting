@@ -8,14 +8,15 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="xq-face" />
+        <module name="xq-meeting" />
         <module name="xq-framework" />
-        <module name="xq-admin" />
         <module name="xq-system" />
         <module name="xq-common" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
       <module name="ruoyi" target="1.8" />
+      <module name="xq-admin" target="1.8" />
       <module name="xq-generator" target="1.8" />
       <module name="xq-quartz" target="1.8" />
       <module name="xq-web" target="1.8" />

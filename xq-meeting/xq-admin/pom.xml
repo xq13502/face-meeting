@@ -10,7 +10,7 @@
 
     <modelVersion>4.0.0</modelVersion>
     <packaging>jar</packaging>
-    <artifactId>xq-admin</artifactId>
+    <artifactId>xq-meeting</artifactId>
 
     <description>
         web服务入口
