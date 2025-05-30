@@ -201,9 +201,18 @@ public class CmsMeetingServiceImpl implements ICmsMeetingService {
      * @param meetingIds 需要删除的会议记录主键
      * @return 结果
      */
+    @Transactional
     @Override
     public int deleteCmsMeetingByMeetingIds(Long[] meetingIds) {
-        return cmsMeetingMapper.deleteCmsMeetingByMeetingIds(meetingIds);
+        //删除会议记录
+        int meetingResult = cmsMeetingMapper.deleteCmsMeetingByMeetingIds(meetingIds);
+        if(meetingResult > 0){
+           for (Long meetingId : meetingIds){
+               cmsAttendanceMapper.deleteCmsAttendanceByMeetingId(meetingId);
+           }
+        }
+        return meetingResult;
+        //删除考勤记录
     }
 
     /**

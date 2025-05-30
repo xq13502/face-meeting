@@ -79,4 +79,9 @@ public interface CmsAttendanceMapper
      * 查询请假表是否存在当前用户参与会议的请假记录
      */
     CmsAttendance selectCmsAttendanceByMeetingIdAndUserId(@Param("meetingId") Long meetingId, @Param("userId") Long userId);
+
+    /**
+     * 批量删除会议的签到考勤记录
+     */
+    int deleteCmsAttendanceByMeetingId(@Param("meetingIds") Long meetingIds);
 }

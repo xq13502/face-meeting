@@ -188,4 +188,8 @@
             #{id}
         </foreach>
     </delete>
+
+    <delete id="deleteCmsAttendanceByMeetingId" parameterType="Long">
+        delete from cms_attendance where meeting_id = #{meetingIds}
+    </delete>
 </mapper>
