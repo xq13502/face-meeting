@@ -61,7 +61,7 @@ public class QrCodeController extends BaseController {
 
         // 生成前端页面 URL（需部署前端页面）
 //        String url = "http://172.20.10.2:80/sign-page?token=" + token;
-        String url = "http://106.52.251.122:8080/sign-page?token=" + token;
+        String url = "https://shaw-meeting.cloud/sign-page?token=" + token;
 
         return AjaxResult.success(url);
     }
